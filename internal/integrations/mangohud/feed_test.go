@@ -57,8 +57,15 @@ func TestFeed_Write(t *testing.T) {
 func TestFeed_Write_MissingDir(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "missing", "feed.txt")
 	feed := New(path)
-	err := feed.Write("label", 0.5)
-	if err == nil {
-		t.Fatalf("Write() expected error, got nil")
+
+	if err := feed.Write("label", 0.5); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+	if string(got) != "label: 50%\n" {
+		t.Errorf("ReadFile() = %q, want %q", got, "label: 50%\n")
 	}
 }

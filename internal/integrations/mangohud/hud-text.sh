@@ -1,5 +1,5 @@
 #!/bin/bash
-FILE="$HOME/.local/state/deej/deej-hud.txt"
+FILE="$HOME/.cache/deej/deej-hud.txt"
 
 [ -f "$FILE" ] || exit 0
 
