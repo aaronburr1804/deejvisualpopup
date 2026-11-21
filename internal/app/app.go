@@ -27,6 +27,7 @@ type App struct {
 	sessions         *mixer.Mixer
 	obs              *obs.Client
 	discord          *discord.Client
+	hud              *hudFeed
 	localizer        *i18n.Localizer
 	resolvedLanguage string
 	lifecycle        sync.Mutex
@@ -69,6 +70,7 @@ func New(logger *zap.SugaredLogger, verbose bool, configPath string) (*App, erro
 		return nil, err
 	}
 	d.obs = obs.New(d.config, logger)
+	d.hud = newHUDFeed(d.logger.Named("mangohud"))
 	d.discord = discord.New(d.config, logger, filepath.Join(filepath.Dir(d.config.Path()), discord.TokenFileName), discordVolumeSource(d.config.Values, d.serial.CurrentSliderPercentValues))
 	finder, err := audio.NewSessionFinder(logger)
 	if err != nil {
@@ -85,7 +87,15 @@ func New(logger *zap.SugaredLogger, verbose bool, configPath string) (*App, erro
 }
 
 // Initialize registers mixer handlers before audio discovery and before serial starts.
-func (d *App) Initialize() error { return d.sessions.Initialize() }
+func (d *App) Initialize() error {
+	if err := d.sessions.Initialize(); err != nil {
+		return err
+	}
+	if d.hud != nil {
+		d.hud.start(d.serial, d.config.Values, d.logger.Named("mangohud"))
+	}
+	return nil
+}
 
 // Start starts producers after all mixer and desktop subscriptions are registered.
 func (d *App) Start() {
@@ -122,6 +132,9 @@ func (d *App) Stop() error {
 	}
 	if d.serial != nil {
 		d.serial.Stop()
+	}
+	if d.hud != nil {
+		d.hud.stop()
 	}
 	if d.obs != nil {
 		d.obs.Stop()
