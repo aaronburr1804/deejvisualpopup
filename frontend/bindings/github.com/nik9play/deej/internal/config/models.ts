@@ -89,6 +89,36 @@ export class DiscordSettings {
 export type HexWord = string;
 
 /**
+ * MangoHudSettings describes the MangoHud integration. It allows deej to
+ * display slider changes in the MangoHud overlay. Optionally renames
+ * deej.unmapped to a custom label.
+ */
+export class MangoHudSettings {
+    "enabled": boolean;
+    "unmappedRename": string;
+
+    /** Creates a new MangoHudSettings instance. */
+    constructor($$source: Partial<MangoHudSettings> = {}) {
+        if (!("enabled" in $$source)) {
+            this["enabled"] = false;
+        }
+        if (!("unmappedRename" in $$source)) {
+            this["unmappedRename"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new MangoHudSettings instance from a string or object.
+     */
+    static createFrom($$source: any = {}): MangoHudSettings {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new MangoHudSettings($$parsedSource as Partial<MangoHudSettings>);
+    }
+}
+
+/**
  * OBSSettings describes the OBS websocket connection parameters
  */
 export class OBSSettings {
@@ -183,6 +213,7 @@ export class Settings {
     "language": string;
     "obs": OBSSettings;
     "discord": DiscordSettings;
+    "mangohud": MangoHudSettings;
 
     /** Creates a new Settings instance. */
     constructor($$source: Partial<Settings> = {}) {
@@ -210,6 +241,9 @@ export class Settings {
         if (!("discord" in $$source)) {
             this["discord"] = (new DiscordSettings());
         }
+        if (!("mangohud" in $$source)) {
+            this["mangohud"] = (new MangoHudSettings());
+        }
 
         Object.assign(this, $$source);
     }
@@ -222,6 +256,7 @@ export class Settings {
         const $$createField3_0 = $$createType5;
         const $$createField6_0 = $$createType6;
         const $$createField7_0 = $$createType7;
+        const $$createField8_0 = $$createType8;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("profiles" in $$parsedSource) {
             $$parsedSource["profiles"] = $$createField1_0($$parsedSource["profiles"]);
@@ -234,6 +269,9 @@ export class Settings {
         }
         if ("discord" in $$parsedSource) {
             $$parsedSource["discord"] = $$createField7_0($$parsedSource["discord"]);
+        }
+        if ("mangohud" in $$parsedSource) {
+            $$parsedSource["mangohud"] = $$createField8_0($$parsedSource["mangohud"]);
         }
         return new Settings($$parsedSource as Partial<Settings>);
     }
@@ -262,7 +300,7 @@ export class SliderMappingEntry {
      * Creates a new SliderMappingEntry instance from a string or object.
      */
     static createFrom($$source: any = {}): SliderMappingEntry {
-        const $$createField1_0 = $$createType8;
+        const $$createField1_0 = $$createType9;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("targets" in $$parsedSource) {
             $$parsedSource["targets"] = $$createField1_0($$parsedSource["targets"]);
@@ -291,4 +329,5 @@ const $$createType4 = $Create.Array($$createType3);
 const $$createType5 = COMSettings.createFrom;
 const $$createType6 = OBSSettings.createFrom;
 const $$createType7 = DiscordSettings.createFrom;
-const $$createType8 = $Create.Array($Create.Any);
+const $$createType8 = MangoHudSettings.createFrom;
+const $$createType9 = $Create.Array($Create.Any);

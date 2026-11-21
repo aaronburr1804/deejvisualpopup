@@ -14,14 +14,15 @@ import (
 // in defaultSettings and, if needed, a rule in normalize) to reach the file,
 // the runtime snapshot and the settings GUI
 type Settings struct {
-	ActiveProfile  string          `yaml:"active_profile" json:"activeProfile"`
-	Profiles       []Profile       `yaml:"profiles" json:"profiles"`
-	InvertSliders  bool            `yaml:"invert_sliders" json:"invertSliders"`
-	COM            COMSettings     `yaml:"com" json:"com"`
-	NoiseReduction string          `yaml:"noise_reduction,omitempty" json:"noiseReduction"`
-	Language       string          `yaml:"language" json:"language"`
-	OBS            OBSSettings     `yaml:"obs" json:"obs"`
-	Discord        DiscordSettings `yaml:"discord" json:"discord"`
+	ActiveProfile  string           `yaml:"active_profile" json:"activeProfile"`
+	Profiles       []Profile        `yaml:"profiles" json:"profiles"`
+	InvertSliders  bool             `yaml:"invert_sliders" json:"invertSliders"`
+	COM            COMSettings      `yaml:"com" json:"com"`
+	NoiseReduction string           `yaml:"noise_reduction,omitempty" json:"noiseReduction"`
+	Language       string           `yaml:"language" json:"language"`
+	OBS            OBSSettings      `yaml:"obs" json:"obs"`
+	Discord        DiscordSettings  `yaml:"discord" json:"discord"`
+	MangoHud       MangoHudSettings `yaml:"mangohud" json:"mangohud"`
 }
 
 // Profile is one named slider layout. Only the mapping and its hotkey are
@@ -75,6 +76,14 @@ type DiscordSettings struct {
 	ClientID         string `yaml:"client_id" json:"clientId"`
 	ClientSecret     string `yaml:"client_secret" json:"clientSecret"`
 	VolumeConversion bool   `yaml:"volume_conversion" json:"volumeConversion"`
+}
+
+// MangoHudSettings describes the MangoHud integration. It allows deej to
+// display slider changes in the MangoHud overlay. Optionally renames
+// deej.unmapped to a custom label.
+type MangoHudSettings struct {
+	Enabled        bool   `yaml:"enabled" json:"enabled"`
+	UnmappedRename string `yaml:"unmapped_rename" json:"unmappedRename"`
 }
 
 // HexWord is a 16-bit value carried as a hex string (e.g. "1A86"), the form

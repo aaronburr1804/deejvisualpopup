@@ -80,3 +80,12 @@ discord:
   # совпадает с регулятором Discord, а на низкой громкости регулировка точнее;
   # false ускоряет рост громкости. На цели input/output настройка не влияет
   volume_conversion: true
+
+# MangoHud integration (optional)
+# Display slider changes in MangoHud overlay with a 5 second timeout.
+# MangoHud legacy layout cannot be enabled (legacy_layout=0)
+# Included script hud-text.sh must be targeted by exec= in your MangoHud config to display the text.
+mangohud:
+  enabled: false
+  # label shown for deej.unmapped, e.g. "game"
+  unmapped_rename: ""

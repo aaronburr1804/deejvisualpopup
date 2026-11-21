@@ -65,6 +65,8 @@ func TestSaveUserSettingsRoundTrip(t *testing.T) {
 	settings.OBS.Host = "192.168.1.5"
 	settings.OBS.Port = 4456
 	settings.OBS.Password = "secret"
+	settings.MangoHud.Enabled = true
+	settings.MangoHud.UnmappedRename = "game"
 	settings.Profiles = []Profile{
 		{Name: "default", SliderMapping: SliderMappings{
 			{Slider: 0, Targets: []string{"master"}},
@@ -92,6 +94,8 @@ func TestSaveUserSettingsRoundTrip(t *testing.T) {
 		"invert_sliders: true",
 		"noise_reduction: high",
 		"discord.exe",
+		"mangohud:",
+		"unmapped_rename: game",
 		"active_profile: default",
 		"name: gaming",
 		"hotkey: Ctrl+Alt+2",
@@ -107,7 +111,8 @@ func TestSaveUserSettingsRoundTrip(t *testing.T) {
 		got.COM.VID != "2341" || got.COM.PID != "0043" ||
 		!got.InvertSliders || got.NoiseReduction != "high" || got.Language != "ru" ||
 		!got.OBS.Enabled || got.OBS.Host != "192.168.1.5" ||
-		got.OBS.Port != 4456 || got.OBS.Password != "secret" {
+		got.OBS.Port != 4456 || got.OBS.Password != "secret" ||
+		!got.MangoHud.Enabled || got.MangoHud.UnmappedRename != "game" {
 		t.Errorf("round trip mismatch: %+v", got)
 	}
 
@@ -418,6 +423,20 @@ func TestLoadEmptyConfigUsesDefaults(t *testing.T) {
 	}
 	if !settings.OBS.VolumeConversion || !settings.Discord.VolumeConversion {
 		t.Errorf("volume conversion should default on: OBS=%v, Discord=%v", settings.OBS.VolumeConversion, settings.Discord.VolumeConversion)
+	}
+	if settings.MangoHud.Enabled {
+		t.Errorf("MangoHud should default off: %v", settings.MangoHud.Enabled)
+	}
+	if settings.MangoHud.UnmappedRename != "" {
+		t.Errorf("MangoHud.UnmappedRename = %q, expected empty", settings.MangoHud.UnmappedRename)
+	}
+}
+
+func TestLoadReadsMangoHudEnabled(t *testing.T) {
+	cc := newTestConfig(t, "mangohud:\n enabled: true\n")
+
+	if !cc.Values().MangoHud.Enabled {
+		t.Errorf("MangoHud should be enabled: %v", cc.Values().MangoHud.Enabled)
 	}
 }
 

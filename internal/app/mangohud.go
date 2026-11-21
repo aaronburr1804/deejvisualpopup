@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// hudFeed is a MangoHUD feed that can be used to display information on the screen.
+// hudFeed is a MangoHud feed that can be used to display information on the screen.
 type hudFeed struct {
 	feed    *mangohud.Feed
 	done    chan struct{}
@@ -22,7 +22,7 @@ type hudFeed struct {
 func newHUDFeed(logger *zap.SugaredLogger) *hudFeed {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
-		logger.Warnw("MangoHUD feed disabled: failed to get user cache directory", "error", err)
+		logger.Warnw("MangoHud feed disabled: failed to get user cache directory", "error", err)
 		return nil
 	}
 	path := filepath.Join(cacheDir, "deej", "deej-hud.txt")
@@ -40,13 +40,17 @@ func (h *hudFeed) start(sliders *serial.Client, settings func() *config.Settings
 		for {
 			select {
 			case event := <-ch:
-				targets, ok := settings().ActiveMapping().Get(event.SliderID)
+				s := settings()
+				if !s.MangoHud.Enabled {
+					continue
+				}
+				targets, ok := s.ActiveMapping().Get(event.SliderID)
 				if !ok || len(targets) == 0 {
 					continue
 				}
 				label := targets[0]
 				if err := h.feed.Write(label, float64(event.PercentValue)); err != nil {
-					logger.Debugw("MangoHUD feed write failed", "error", err)
+					logger.Debugw("MangoHud feed write failed", "error", err)
 				}
 			case <-h.done:
 				return

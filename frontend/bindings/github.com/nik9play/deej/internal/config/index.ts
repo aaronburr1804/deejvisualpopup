@@ -4,6 +4,7 @@
 export {
     COMSettings,
     DiscordSettings,
+    MangoHudSettings,
     OBSSettings,
     Profile,
     Settings,
