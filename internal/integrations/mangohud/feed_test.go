@@ -3,6 +3,7 @@ package mangohud
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -67,5 +68,26 @@ func TestFeed_Write_MissingDir(t *testing.T) {
 	}
 	if string(got) != "label: 50%\n" {
 		t.Errorf("ReadFile() = %q, want %q", got, "label: 50%\n")
+	}
+}
+
+func TestFeed_Write_DirCreateFails(t *testing.T) {
+	dir := t.TempDir()
+	blocker := filepath.Join(dir, "blocker")
+
+	if err := os.WriteFile(blocker, []byte("blocker"), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	path := filepath.Join(blocker, "feed.txt")
+	feed := New(path)
+	err := feed.Write("label", 0.5)
+
+	if err == nil {
+		t.Fatalf("Write() expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "create directory") {
+		t.Errorf("Write() error = %v, does not contain 'create directory'", err)
 	}
 }
