@@ -90,5 +90,3 @@ mangohud:
   enabled: false
   # label shown for deej.unmapped, e.g. "game"
   unmapped_rename: ""
-  
-

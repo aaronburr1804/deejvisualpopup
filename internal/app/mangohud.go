@@ -3,8 +3,10 @@ package app
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
+	"github.com/nik9play/deej/internal/audio"
 	"github.com/nik9play/deej/internal/config"
 	"github.com/nik9play/deej/internal/integrations/mangohud"
 	"github.com/nik9play/deej/internal/serial"
@@ -48,7 +50,7 @@ func (h *hudFeed) start(sliders *serial.Client, settings func() *config.Settings
 				if !ok || len(targets) == 0 {
 					continue
 				}
-				label := targets[0]
+				label := hudLabel(targets, s.MangoHud.UnmappedRename)
 				if err := h.feed.Write(label, float64(event.PercentValue)); err != nil {
 					logger.Debugw("MangoHud feed write failed", "error", err)
 				}
@@ -57,6 +59,31 @@ func (h *hudFeed) start(sliders *serial.Client, settings func() *config.Settings
 			}
 		}
 	})
+}
+
+// targetLabel turns yaml config target into its HUD label.
+func targetLabel(target, unmappedRename string) string {
+	switch {
+	case strings.EqualFold(target, audio.MasterSessionName):
+		return "Master"
+	case strings.EqualFold(target, audio.InputSessionName):
+		return "Mic"
+	case strings.EqualFold(target, "deej.unmapped") && unmappedRename != "":
+		return unmappedRename
+	case strings.HasSuffix(strings.ToLower(target), ".exe"):
+		return target[:len(target)-4]
+	default:
+		return target
+	}
+}
+
+// hudLabel joins the labels for all of a slider's targets.
+func hudLabel(targets []string, unmappedRename string) string {
+	labels := make([]string, 0, len(targets))
+	for _, target := range targets {
+		labels = append(labels, targetLabel(target, unmappedRename))
+	}
+	return strings.Join(labels, " + ")
 }
 
 // stop stops the feed and waits for all workers to finish.
