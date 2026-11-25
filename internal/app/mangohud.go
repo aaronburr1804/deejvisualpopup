@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/nik9play/deej/internal/audio"
 	"github.com/nik9play/deej/internal/config"
@@ -12,6 +13,9 @@ import (
 	"github.com/nik9play/deej/internal/serial"
 	"go.uber.org/zap"
 )
+
+// hudWriteDelay is the minimum time between feed writes during a slider sweep
+const hudWriteDelay = 40 * time.Millisecond
 
 // hudFeed is a MangoHud feed that can be used to display information on the screen.
 type hudFeed struct {
@@ -34,14 +38,22 @@ func newHUDFeed(logger *zap.SugaredLogger) *hudFeed {
 	}
 }
 
-// start subscribes to slider moves and writes each one to the feed.
+// start subscribes to slider moves and writes the latest real move to the feed, at most once per hudWriteDelay
 func (h *hudFeed) start(sliders *serial.Client, settings func() *config.Settings, logger *zap.SugaredLogger) {
 	ch := sliders.SubscribeToSliderMoveEvents()
 
 	h.workers.Go(func() {
+		seen := make(sliderMemory)
+		var pendingLabel string
+		var pendingValue float64
+		var flush <-chan time.Time
+
 		for {
 			select {
 			case event := <-ch:
+				if !seen.moved(event.SliderID, event.PercentValue) {
+					continue
+				}
 				s := settings()
 				if !s.MangoHud.Enabled {
 					continue
@@ -50,8 +62,14 @@ func (h *hudFeed) start(sliders *serial.Client, settings func() *config.Settings
 				if !ok || len(targets) == 0 {
 					continue
 				}
-				label := hudLabel(targets, s.MangoHud.UnmappedRename)
-				if err := h.feed.Write(label, float64(event.PercentValue)); err != nil {
+				pendingLabel = hudLabel(targets, s.MangoHud.UnmappedRename)
+				pendingValue = float64(event.PercentValue)
+				if flush == nil {
+					flush = time.After(hudWriteDelay)
+				}
+			case <-flush:
+				flush = nil
+				if err := h.feed.Write(pendingLabel, pendingValue); err != nil {
 					logger.Debugw("MangoHud feed write failed", "error", err)
 				}
 			case <-h.done:
@@ -59,6 +77,12 @@ func (h *hudFeed) start(sliders *serial.Client, settings func() *config.Settings
 			}
 		}
 	})
+}
+
+// stop stops the feed and waits for all workers to finish.
+func (h *hudFeed) stop() {
+	close(h.done)
+	h.workers.Wait()
 }
 
 // targetLabel turns yaml config target into its HUD label.
@@ -86,8 +110,12 @@ func hudLabel(targets []string, unmappedRename string) string {
 	return strings.Join(labels, " + ")
 }
 
-// stop stops the feed and waits for all workers to finish.
-func (h *hudFeed) stop() {
-	close(h.done)
-	h.workers.Wait()
+// sliderMemory remembers each slider's last value, to tell real moves from replays.
+type sliderMemory map[int]float32
+
+// moved records v and reports whether it's a real change from a known previous value
+func (m sliderMemory) moved(id int, v float32) bool {
+	prev, seen := m[id]
+	m[id] = v
+	return seen && prev != v
 }

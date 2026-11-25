@@ -40,3 +40,23 @@ func TestHUDLabel(t *testing.T) {
 		})
 	}
 }
+
+func TestSliderMemory(t *testing.T) {
+	m := make(sliderMemory)
+	steps := []struct {
+		id   int
+		v    float32
+		want bool
+	}{
+		{0, 0.50, false}, // baseline
+		{0, 0.50, false}, // replay
+		{0, 0.60, true},  // real move
+		{1, 0.60, false}, // a different slider has its own baseline
+		{0, 0.60, false}, // slider 0 replayed at its new value
+	}
+	for i, step := range steps {
+		if got := m.moved(step.id, step.v); got != step.want {
+			t.Errorf("step %d: moved (%d, %v) = %v, want %v", i, step.id, step.v, got, step.want)
+		}
+	}
+}
